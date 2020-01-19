@@ -1,47 +1,38 @@
-// Copyright 2019 The Chromium Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
-
-import 'dart:async';
-
-import 'package:flutter_clock_helper/model.dart';
 import 'package:flutter/material.dart';
+import 'dart:async';
+import 'package:flutter_clock_helper/model.dart';
 import 'package:intl/intl.dart';
 
-enum _Element {
-  background,
-  text,
-  shadow,
+// <--   Light and Dark mode colors -->
+enum _Elements {
+  bg,
+  cdColor,
+  textColor,
 }
-
 final _lightTheme = {
-  _Element.background: Color(0xFF81B3FE),
-  _Element.text: Colors.white,
-  _Element.shadow: Colors.black,
+  _Elements.bg: Color(0xFF3498db),
+  _Elements.cdColor: Color(0xFF74b9ff),
+  _Elements.textColor: Color(0xFF2C3A47)
 };
-
 final _darkTheme = {
-  _Element.background: Colors.black,
-  _Element.text: Colors.white,
-  _Element.shadow: Color(0xFF174EA6),
+  _Elements.bg: Color(0xFF485460),
+  _Elements.cdColor: Color(0xFF1e272e),
+  _Elements.textColor: Colors.white
 };
-
-/// A basic digital clock.
-///
-/// You can do better than this!
-class DigitalClock extends StatefulWidget {
-  const DigitalClock(this.model);
-
+//<--            End                  >
+// Clock UI code for Flutter Clock Contest
+class Clock extends StatefulWidget {
+  const Clock(this.model);
   final ClockModel model;
-
   @override
-  _DigitalClockState createState() => _DigitalClockState();
+  _ClockState createState() => _ClockState();
 }
 
-class _DigitalClockState extends State<DigitalClock> {
-  DateTime _dateTime = DateTime.now();
+class _ClockState extends State<Clock> {
+  // <---   Date and time fn  --->
+  DateTime now = DateTime.now();
   Timer _timer;
-
+  var _pValue;
   @override
   void initState() {
     super.initState();
@@ -50,81 +41,155 @@ class _DigitalClockState extends State<DigitalClock> {
     _updateModel();
   }
 
-  @override
-  void didUpdateWidget(DigitalClock oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.model != oldWidget.model) {
-      oldWidget.model.removeListener(_updateModel);
-      widget.model.addListener(_updateModel);
-    }
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    widget.model.removeListener(_updateModel);
-    widget.model.dispose();
-    super.dispose();
-  }
-
   void _updateModel() {
     setState(() {
       // Cause the clock to rebuild when the model changes.
     });
   }
-
+////////////////// FOR time update /////////////////////
   void _updateTime() {
+    now = DateTime.now();
     setState(() {
-      _dateTime = DateTime.now();
-      // Update once per minute. If you want to update every second, use the
-      // following code.
       _timer = Timer(
-        Duration(minutes: 1) -
-            Duration(seconds: _dateTime.second) -
-            Duration(milliseconds: _dateTime.millisecond),
+        Duration(seconds: 1) -
+            Duration(seconds: now.second) -
+            Duration(milliseconds: now.millisecond),
         _updateTime,
       );
-      // Update once per second, but make sure to do it at the beginning of each
-      // new second, so that the clock is accurate.
-      // _timer = Timer(
-      //   Duration(seconds: 1) - Duration(milliseconds: _dateTime.millisecond),
-      //   _updateTime,
-      // );
     });
   }
-
+  ////////////// FOR hour % /////////////////////////
+  void _perForClokc(n) {
+    double a = double.parse(n);
+    
+    a += 0.30;
+   
+    setState(() {
+      _pValue = ((a / 24) * 100).round();
+     
+    });
+  }
+// <--                End                      -->
   @override
   Widget build(BuildContext context) {
+    // <--colors seletector and font size  -->
     final colors = Theme.of(context).brightness == Brightness.light
         ? _lightTheme
         : _darkTheme;
-    final hour =
-        DateFormat(widget.model.is24HourFormat ? 'HH' : 'hh').format(_dateTime);
-    final minute = DateFormat('mm').format(_dateTime);
-    final fontSize = MediaQuery.of(context).size.width / 3.5;
-    final offset = -fontSize / 7;
-    final defaultStyle = TextStyle(
-      color: colors[_Element.text],
-      fontFamily: 'PressStart2P',
-      fontSize: fontSize,
-      shadows: [
-        Shadow(
-          blurRadius: 0,
-          color: colors[_Element.shadow],
-          offset: Offset(10, 0),
-        ),
-      ],
-    );
+    final fontSize = MediaQuery.of(context).size.width / 5.5;
+    final textfontSize = MediaQuery.of(context).size.width / 19.5;
 
-    return Container(
-      color: colors[_Element.background],
-      child: Center(
-        child: DefaultTextStyle(
-          style: defaultStyle,
-          child: Stack(
+    //<---             End                   --->
+    // <---Final hour , minutes and seconds  ---->
+    final hourForIndicator = DateFormat('HH').format(now);
+    final hour =
+        DateFormat(widget.model.is24HourFormat ? 'HH' : 'hh').format(now);
+    final minute = DateFormat('mm').format(now);
+    final date = DateFormat('dd.MM.yyyy').format(now);
+    //////////////// _perForClokc to some maths homework haha ////////////
+    _perForClokc(hourForIndicator+'.'+minute);
+    // <---             End                   --->
+    return new MaterialApp(
+      home: Scaffold(
+        backgroundColor: colors[_Elements.bg],
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              Positioned(left: offset, top: 0, child: Text(hour)),
-              Positioned(right: offset, bottom: offset, child: Text(minute)),
+              Padding(
+                padding: EdgeInsets.all(20.0),
+                child: Container(
+                  child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Card(
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10.0)),
+                          color: colors[_Elements.cdColor],
+                          elevation: 10,
+                          child: Text.rich(TextSpan(children: <TextSpan>[
+                            TextSpan(
+                                text: hour,
+                                style: TextStyle(
+                                    fontSize: fontSize,
+                                    fontWeight: FontWeight.w700,
+                                    color: colors[_Elements.textColor]))
+                          ])),
+                        ),
+                        Text.rich(TextSpan(children: <TextSpan>[
+                          TextSpan(
+                              text: ' : ',
+                              style: TextStyle(
+                                  fontSize: 50,
+                                  fontWeight: FontWeight.w700,
+                                  color: colors[_Elements.cdColor])),
+                        ])),
+                        Card(
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10.0)),
+                          color: colors[_Elements.cdColor],
+                          elevation: 10,
+                          child: Text.rich(TextSpan(children: <TextSpan>[
+                            TextSpan(
+                                text: minute,
+                                style: TextStyle(
+                                    fontSize: fontSize,
+                                    fontWeight: FontWeight.w700,
+                                    color: colors[_Elements.textColor]))
+                          ])),
+                        ),
+                      ]),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.all(15.0),
+                child: Center(
+                    child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Text.rich(TextSpan(children: <TextSpan>[
+                      TextSpan(
+                          text: date + ' IS  ',
+                          style: TextStyle(
+                              fontSize: textfontSize,
+                              fontWeight: FontWeight.w900,
+                              color: colors[_Elements.textColor]))
+                    ])),
+                    Column(children: <Widget>[
+                      Container(
+                        height: 50,
+                        width: 50,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: colors[_Elements.cdColor],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                            Text.rich(TextSpan(children: <TextSpan>[
+                              TextSpan(
+                                  text: _pValue.toString() + '%',
+                                  style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: colors[_Elements.textColor]))
+                            ]))
+                          ],
+                        ),
+                      )
+                    ]),
+                    Text.rich(TextSpan(children: <TextSpan>[
+                      TextSpan(
+                          text: ' COMPLETE',
+                          style: TextStyle(
+                              fontSize: textfontSize,
+                              fontWeight: FontWeight.w900,
+                              color: colors[_Elements.textColor]))
+                    ]))
+                  ],
+                )),
+              )
             ],
           ),
         ),
